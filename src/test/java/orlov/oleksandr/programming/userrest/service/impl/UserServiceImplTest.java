@@ -181,6 +181,26 @@ class UserServiceImplTest {
     }
 
     @Test
+    void partialUpdate_BirthDateNull() throws IllegalAccessException {
+        User user = new User();
+        user.setEmail(EMAIL);
+        user.setFirstName(FIRST_NAME);
+        user.setLastName(LAST_NAME);
+        user.setBirthDate(VALID_DATE);
+
+        User updateUser = new User();
+        updateUser.setEmail(EMAIL);
+        updateUser.setFirstName(FIRST_NAME + "UPDATED");
+        updateUser.setBirthDate(null);
+
+        userService.create(user);
+        userService.partialUpdate(updateUser);
+
+        assertEquals(updateUser.getFirstName(), userService.getUserByEmail(EMAIL).getFirstName());
+        assertEquals(VALID_DATE, userService.getUserByEmail(EMAIL).getBirthDate());
+    }
+
+    @Test
     void partialUpdate_BirthDateLessThenMinimalAge(){
         User user = new User();
         user.setEmail(EMAIL);

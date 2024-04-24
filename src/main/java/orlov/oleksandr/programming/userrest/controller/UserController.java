@@ -1,5 +1,6 @@
 package orlov.oleksandr.programming.userrest.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -25,37 +26,37 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@RequestBody @Validated User user, BindingResult bindingResult) {
+    public ResponseEntity<User> createUser(@RequestBody @Validated User user, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            getErrors(bindingResult);
+            throw new ValidationException(getErrors(bindingResult));
         }
 
-        return userService.create(user);
+        return new ResponseEntity<>(userService.create(user), HttpStatus.CREATED);
     }
 
     @PutMapping
-    public User updateUser(@RequestBody @Validated User user, BindingResult bindingResult) {
+    public ResponseEntity<User> updateUser(@RequestBody @Validated User user, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            getErrors(bindingResult);
+            throw new ValidationException(getErrors(bindingResult));
         }
 
-        return userService.update(user);
+        return new ResponseEntity<>(userService.update(user), HttpStatus.OK);
     }
 
     @PatchMapping
-    public User updateUser(@RequestBody User user) throws IllegalAccessException {
+    public User partialUpdateUser(@RequestBody User user) throws IllegalAccessException {
         return userService.partialUpdate(user);
     }
 
     @DeleteMapping
-    public ResponseEntity<String> deleteUser(@RequestBody @Validated User user, BindingResult bindingResult) {
+    public ResponseEntity<Object> deleteUser(@RequestBody @Validated User user, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            getErrors(bindingResult);
+            throw new ValidationException(getErrors(bindingResult));
         }
 
         userService.delete(user);
 
-        return ResponseEntity.ok().body("User deleted successfully with email = " + user.getEmail());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
@@ -64,11 +65,11 @@ public class UserController {
         return userService.getUsersWithBirthDateInBetween(startDate, endDate);
     }
 
-    private void getErrors(BindingResult bindingResult) {
+    private Map<String, String> getErrors(BindingResult bindingResult) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError fieldError : bindingResult.getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
-        throw new ValidationException(errors);
+        return errors;
     }
 }
