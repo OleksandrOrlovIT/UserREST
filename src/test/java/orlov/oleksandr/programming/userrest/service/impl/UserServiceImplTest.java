@@ -3,6 +3,7 @@ package orlov.oleksandr.programming.userrest.service.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.internal.matchers.Null;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.PropertySource;
@@ -17,7 +18,6 @@ import static com.jayway.jsonpath.internal.path.PathCompiler.fail;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@TestPropertySource("classpath:application.properties")
 class UserServiceImplTest {
 
     private static final String EMAIL = "EMAIL";
@@ -27,13 +27,12 @@ class UserServiceImplTest {
 
     private UserServiceImpl userService;
 
-    @Value("${minimal.age}")
+    @Autowired
     private int minimalAge;
 
     @BeforeEach
     void beforeEach() {
-        userService = new UserServiceImpl();
-        setMinimalAgeForTesting(minimalAge);
+        userService = new UserServiceImpl(minimalAge);
     }
 
     @Test
@@ -272,16 +271,5 @@ class UserServiceImplTest {
         assertEquals(5, userService.getUsersWithBirthDateInBetween(VALID_DATE, to.minusDays(6)).size());
         assertEquals(0, userService.getUsersWithBirthDateInBetween(to.plusDays(100),
                 to.plusDays(100)).size());
-    }
-
-    private void setMinimalAgeForTesting(int age) {
-        try {
-            Field minimalAgeField = UserServiceImpl.class.getDeclaredField("minimalAge");
-            minimalAgeField.setAccessible(true);
-            minimalAgeField.setInt(null, age);
-            minimalAgeField.setAccessible(false);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            fail("Failed to set minimalAge for testing");
-        }
     }
 }

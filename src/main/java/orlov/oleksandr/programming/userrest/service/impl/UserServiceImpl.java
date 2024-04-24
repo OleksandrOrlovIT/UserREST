@@ -1,7 +1,6 @@
 package orlov.oleksandr.programming.userrest.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import orlov.oleksandr.programming.userrest.model.User;
 import orlov.oleksandr.programming.userrest.service.UserService;
@@ -18,10 +17,10 @@ public class UserServiceImpl implements UserService {
 
     private List<User> users;
 
-    @Value("${minimal.age}")
-    private static int minimalAge;
+    private int minimalAge;
 
-    public UserServiceImpl() {
+    public UserServiceImpl(int minimalAge) {
+        this.minimalAge = minimalAge;
         users = new ArrayList<>();
     }
 
@@ -53,7 +52,7 @@ public class UserServiceImpl implements UserService {
         Class<?> userClass = User.class;
         Field[] userFields = userClass.getDeclaredFields();
         for (Field userField : userFields) {
-            if(userField.getName().equals("birthDate")){
+            if(userField.getName().equals("birthDate") && user.getBirthDate() != null){
                 validateAgeLessThenMinimalAge(user.getBirthDate());
             }
             userField.setAccessible(true);
