@@ -1,20 +1,24 @@
 package orlov.oleksandr.programming.userrest.model;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import orlov.oleksandr.programming.userrest.model.validator.FutureDate;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Setter
 @Getter
+@NoArgsConstructor
 public class User {
 
     @Pattern(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}$")
+    @NotNull
     private String email;
 
     @NotEmpty
@@ -23,8 +27,8 @@ public class User {
     @NotEmpty
     private String lastName;
 
-    @NotEmpty
-    @FutureDate
+    @Past
+    @NotNull
     private LocalDate birthDate;
 
     private String address;
