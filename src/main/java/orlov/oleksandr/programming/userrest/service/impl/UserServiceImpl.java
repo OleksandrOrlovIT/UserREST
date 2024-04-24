@@ -27,49 +27,42 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User create(User user) {
-        Objects.requireNonNull(user, "user must not be null");
-        Objects.requireNonNull(user.getBirthDate(), "birthDate must not be null");
+        validateUserHasAllRequiredFields(user);
 
-        if(getUserByEmail(user.getEmail()) != null){
-            throw new IllegalArgumentException("User already exists with email = " + user.getEmail());
-        }
+        validateUserDoesNotExistByEmail(user.getEmail());
 
-        if(!isDateMoreThenMinimalAge(user.getBirthDate())){
-            throw new IllegalArgumentException("User has an invalid birth date for " + user.getBirthDate());
-        }
+        validateAgeLessThenMinimalAge(user.getBirthDate());
 
         users.add(user);
-
         return user;
     }
 
     @Override
     public User update(User user) {
-        User foundUser = validateUserForUpdateAndFindByEmail(user);
-
+        validateUserHasAllRequiredFields(user);
+        validateAgeLessThenMinimalAge(user.getBirthDate());
+        User foundUser = getUserByEmail(user.getEmail());
         users.set(users.indexOf(foundUser), user);
-
         return user;
     }
 
     @Override
     public User partialUpdate(User user) throws IllegalAccessException {
-        User foundUser = validateUserForUpdateAndFindByEmail(user);
+        User foundUser = getUserByEmail(user.getEmail());
 
         Class<?> userClass = User.class;
         Field[] userFields = userClass.getDeclaredFields();
         for (Field userField : userFields) {
+            if(userField.getName().equals("birthDate")){
+                validateAgeLessThenMinimalAge(user.getBirthDate());
+            }
             userField.setAccessible(true);
-
             Object value = userField.get(user);
-
-            if(value != null){
+            if (value != null) {
                 userField.set(foundUser, value);
             }
-
             userField.setAccessible(false);
         }
-
         return foundUser;
     }
 
@@ -80,6 +73,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getUsersWithBirthDateInBetween(LocalDate from, LocalDate to) {
+        if(!from.isBefore(to) && !from.isEqual(to)) {
+            throw new IllegalArgumentException("From = " + from + " must be before To = " + to);
+        }
+
         return users.stream()
                 .filter(user -> !user.getBirthDate().isBefore(from) && !user.getBirthDate().isAfter(to))
                 .toList();
@@ -87,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByEmail(String email) {
-        Objects.requireNonNull(email, "email must not be null");
+        Objects.requireNonNull(email, "Email must not be null");
 
         return users.stream()
                 .filter(user -> user.getEmail().equals(email))
@@ -95,20 +92,27 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-    private boolean isDateMoreThenMinimalAge(LocalDate date) {
-        LocalDate dateMinusMinimalAge = LocalDate.now().minusDays(minimalAge);
-        return date.isBefore(dateMinusMinimalAge) || date.isEqual(dateMinusMinimalAge);
+    private void validateAgeLessThenMinimalAge(LocalDate date){
+        if (!isDateMoreThanMinimalAge(date)) {
+            throw new IllegalArgumentException("User's age is less than " + minimalAge + ": " + date);
+        }
     }
 
-    private User validateUserForUpdateAndFindByEmail(User user){
-        Objects.requireNonNull(user, "user must not be null");
+    private boolean isDateMoreThanMinimalAge(LocalDate date) {
+        return (LocalDate.now().getYear() - date.getYear()) >= minimalAge;
+    }
 
-        User foundUser = getUserByEmail(user.getEmail());
-
-        if(getUserByEmail(user.getEmail()) == null){
-            throw new IllegalArgumentException("User doesn't exist in database = " + user.getEmail());
+    private void validateUserDoesNotExistByEmail(String email) {
+        if (users.stream().anyMatch(user -> user.getEmail().equals(email))) {
+            throw new IllegalArgumentException("User already exists with email: " + email);
         }
+    }
 
-        return foundUser;
+    private void validateUserHasAllRequiredFields(User user) {
+        Objects.requireNonNull(user, "User must not be null");
+        Objects.requireNonNull(user.getEmail(), "Email must not be null");
+        Objects.requireNonNull(user.getFirstName(), "FirstName must not be null");
+        Objects.requireNonNull(user.getLastName(), "LastName must not be null");
+        Objects.requireNonNull(user.getBirthDate(), "BirthDate must not be null");
     }
 }
